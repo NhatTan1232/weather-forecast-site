@@ -1,0 +1,4 @@
+cd kafka\kafka
+bin\windows\zookeeper-server-start.bat config\zookeeper.properties
+cd kafka\kafka
+bin\windows\kafka-server-start.bat config\server.properties

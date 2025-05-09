@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vietnam Weather Map</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    svg { width: 800px; height: auto; }
+    .region { stroke: #fff; stroke-width: 0.5px; }
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Vietnam Temperature Map</h1>
+  <div id="map-container"></div>
+
+  <script>
+    // Color scale from cool to hot
+    const colorScale = d3.scaleLinear()
+      .domain([15, 25, 35, 40])  // Customize based on Vietnam temps
+      .range(["#66ccff", "#ffff66", "#ff9933", "#ff0000"]);  // Blue → Yellow → Orange → Red
+
+    async function fetchWeather() {
+      const res = await fetch('/weather'); // Adjust if endpoint changes
+      const weather = await res.json();
+
+      // weather.location.name will be like "VN-HN"
+      const regionId = weather.location.name;
+      const temp = weather.current.temp_c;
+
+      // Load the SVG if it's not already loaded
+      if (!document.getElementById("vietnam-map")) {
+        const svgData = await d3.xml("/vietnam.svg");
+        const svgNode = svgData.documentElement;
+        svgNode.id = "vietnam-map";  // Give it an ID for later reference
+        document.getElementById("map-container").appendChild(svgNode);
+      }
+
+      // Color the region
+      const regionPath = document.getElementById(regionId);
+      if (regionPath) {
+        regionPath.setAttribute("fill", colorScale(temp));
+        regionPath.setAttribute("title", `${regionId}: ${temp}°C`);
+      }
+    }
+
+    fetchWeather();
+    setInterval(fetchWeather, 10000); // Update every 60s
+  </script>
+</body>
+</html>
