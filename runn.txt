@@ -1,4 +1,6 @@
-cd kafka\kafka
+cd .\kafka\kafExd\
 bin\windows\zookeeper-server-start.bat config\zookeeper.properties
-cd kafka\kafka
+cd .\kafka\kafExd\
 bin\windows\kafka-server-start.bat config\server.properties
+python kafka/weather_producer.py
+python backend/app.py 
