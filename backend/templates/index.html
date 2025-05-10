@@ -7,36 +7,72 @@
   <style>
     svg#vietnam-map {
       width: 1000px;
-      /* or any desired size */
       height: auto;
     }
 
     .region {
       stroke: #fff;
       stroke-width: 0.5px;
+      transition: filter 0.2s ease;
+    }
+
+    .region:hover {
+      filter: drop-shadow(0 0 5px rgb(255, 255, 255));
+      cursor: pointer;
+    }
+
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      pointer-events: none;
+      display: none;
+    }
+
+    #legend-container {
+      position: absolute;
+      left: 20px;
+      top: 100px;
+      z-index: 1000;
+    }
+
+    #legend {
+      font-size: 12px;
+      overflow: visible;
     }
 
     body {
       font-family: Arial, sans-serif;
+      position: relative;
     }
   </style>
 </head>
 
 <body>
   <h1>Vietnam Temperature Map</h1>
+
+  <div id="legend-container">
+    <svg id="legend" width="60" height="300"></svg>
+  </div>
+
   <div id="map-container"></div>
+  <div class="tooltip" id="tooltip"></div>
 
   <script>
     // Color scale from cool to hot
     const colorScale = d3.scaleLinear()
-      .domain([25, 28, 31, 35, 38])  // Customize based on Vietnam temps
-      .range(["#fff33b", "#fdc70c", "#f3903f", "#ed683c", "#e93e3a"]);
+      .domain([20, 25, 30, 35])  // Customize based on Vietnam temps
+      .range(["#1b8a5a", "#fbb021", "#f68838", "#ee3e32"]);
+
+    const tooltip = document.getElementById('tooltip');
 
     async function fetchWeather() {
-      const res = await fetch('/weather'); // Adjust if endpoint changes
+      const res = await fetch('/weather');
       const weather = await res.json();
 
-      // weather.location.name will be like "VN-HN"
       const regionId = weather.location.name;
       const temp = weather.current.temp_c;
 
@@ -44,20 +80,89 @@
       if (!document.getElementById("vietnam-map")) {
         const svgData = await d3.xml("/vietnam.svg");
         const svgNode = svgData.documentElement;
+
         svgNode.id = "vietnam-map";  // Give it an ID for later reference
         document.getElementById("map-container").appendChild(svgNode);
+
+        // Add hover listeners to regions
+        svgNode.querySelectorAll('path, g').forEach(region => {
+          region.classList.add('region');
+
+          region.addEventListener('mouseover', e => {
+            const name = region.id;
+            const temp = region.getAttribute('data-temp') || 'N/A';
+            tooltip.style.display = 'block';
+            tooltip.innerHTML = `<strong>${name}</strong>: ${temp}°C`;
+          });
+
+          region.addEventListener('mousemove', e => {
+            tooltip.style.left = (e.pageX + 10) + 'px';
+            tooltip.style.top = (e.pageY + 10) + 'px';
+          });
+
+          region.addEventListener('mouseout', () => {
+            tooltip.style.display = 'none';
+          });
+        });
       }
 
       // Color the region
       const regionPath = document.getElementById(regionId);
       if (regionPath) {
         regionPath.setAttribute("fill", colorScale(temp));
-        regionPath.setAttribute("title", `${regionId}: ${temp}°C`);
+        regionPath.setAttribute("data-temp", temp);
       }
     }
 
+    // Create vertical color legend
+    const legendSvg = d3.select("#legend");
+    const legendMargin = { top: 10, right: 40, bottom: 10, left: 10 };
+    const legendInnerWidth = +legendSvg.attr("width") - legendMargin.left - legendMargin.right;
+    const legendInnerHeight = +legendSvg.attr("height") - legendMargin.top - legendMargin.bottom;
+
+    const legendGroup = legendSvg.append("g")
+      .attr("transform", `translate(${legendMargin.left},${legendMargin.top})`);
+
+    // Vertical scale: 35°C on top, 20°C on bottom
+    const tempScale = d3.scaleLinear()
+      .domain([35, 20])  // Flip scale
+      .range([0, legendInnerHeight]);
+
+    // Gradient definition
+    const defs = legendSvg.append("defs");
+    const linearGradient = defs.append("linearGradient")
+      .attr("id", "temperature-gradient")
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "0%")
+      .attr("y2", "100%");
+
+    for (let i = 0; i <= 100; i++) {
+      const temp = 35 - (15 * i / 100); // start from 35 down to 20
+      linearGradient.append("stop")
+        .attr("offset", `${i}%`)
+        .attr("stop-color", colorScale(temp));
+    }
+
+    // Draw gradient bar
+    legendGroup.append("rect")
+      .attr("x", 10)
+      .attr("y", 0)
+      .attr("width", 20)
+      .attr("height", legendInnerHeight)
+      .style("fill", "url(#temperature-gradient)");
+
+    // Axis
+    const axis = d3.axisRight(tempScale)
+      .tickValues([20, 25, 30, 35])
+      .tickFormat(d => d + "°C");
+
+    legendGroup.append("g")
+      .attr("transform", "translate(30, 0)")
+      .call(axis);
+
     fetchWeather();
-    setInterval(fetchWeather, 10); // Update every 60s
+    setInterval(fetchWeather, 50);
   </script>
 </body>
 

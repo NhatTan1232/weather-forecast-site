@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 API_KEY = os.getenv("WEATHER_API_KEY")  # from weatherapi.com or any API
 cities = list(city_to_id.keys())
-print(API_KEY)
 producer = KafkaProducer(bootstrap_servers='localhost:9092',
                          value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
