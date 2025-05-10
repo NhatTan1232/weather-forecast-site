@@ -28,4 +28,3 @@ if __name__ == "__main__":
             if weather_data:
                 producer.send('weather-topic', weather_data)
                 print("Produced weather data:", weather_data)
-            time.sleep(1)
