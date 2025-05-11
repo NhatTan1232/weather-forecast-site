@@ -28,7 +28,7 @@ def serve_svg():
 def get_province_prediction(province_id):
     # Fetch the latest prediction for the province
     result = collection.find_one(
-        {"location_name": province_id},
+        {"location_id": province_id},
         sort=[("_id", -1)]  # Latest document
     )
     if result:

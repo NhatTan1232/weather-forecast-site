@@ -89,7 +89,7 @@
       const res = await fetch('/weather');
       const weather = await res.json();
 
-      const regionId = weather.location.name;
+      const regionId = weather.location.id;
       const temp = weather.current.temp_c;
 
       if (!document.getElementById("vietnam-map")) {
@@ -103,13 +103,6 @@
           region.classList.add('region');
 
           // Tooltip hover
-          region.addEventListener('mouseover', e => {
-            const name = region.id;
-            const temp = region.getAttribute('data-temp') || 'N/A';
-            tooltip.style.display = 'block';
-            tooltip.innerHTML = `<strong>${name}</strong>: ${temp}°C`;
-          });
-
           region.addEventListener('mousemove', e => {
             tooltip.style.left = (e.pageX + 10) + 'px';
             tooltip.style.top = (e.pageY + 10) + 'px';
@@ -131,7 +124,7 @@
               if (res.ok) {
                 panel.innerHTML = `
                   <strong>Province:</strong> ${data.location_name}<br>
-                  <strong>Predicted Temp:</strong> ${data.temp_c}°C<br>
+                  <strong>Temperature:</strong> ${data.temp_c}°C<br>
                   <strong>Condition:</strong> ${data.condition_text || 'N/A'}<br>
                   <strong>Time:</strong> ${data.time}
                 `;

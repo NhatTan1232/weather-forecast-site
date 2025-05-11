@@ -3,7 +3,7 @@ import requests
 import json
 import time
 import os
-from cities import city_to_id
+from cities import city_to_id, city_to_province
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,8 +16,8 @@ def fetch_weather(city):
     url = f"http://api.weatherapi.com/v1/current.json?key={API_KEY}&q={city}&aqi=no"
     response = requests.get(url)
     data = response.json()
-    print(data)
-    data['location']['name'] = city_to_id[city]
+    data['location']['name'] = city_to_province[city]
+    data['location']['id'] = city_to_id[city]
     return data
 
 if __name__ == "__main__":

@@ -11,10 +11,11 @@ latest_weather = {}
 def predict(data):
     location = data.get('location', {})
     current = data.get('current', {})
-
+    
     # Build a single record with your desired columns
     record = {
         'location_name': location.get('name'),
+        'location_id': location.get('id'),
         'time': location.get('localtime'),
         'temp_c': current.get('temp_c'),
         'is_day': current.get('is_day'),
@@ -66,7 +67,7 @@ def consume():
         collection.insert_one(record)
 
         latest_weather = {
-            "location": { "name": record["location_name"] },
+            "location": { "name": record["location_name"],  "id": record["location_id"]},
             "time": record["time"],
             "current": { "temp_c": record["temp_c"] }
         }
