@@ -67,6 +67,7 @@ def consume():
 
         latest_weather = {
             "location": { "name": record["location_name"] },
+            "time": record["time"],
             "current": { "temp_c": record["temp_c"] }
         }
         print("Consumed weather data:", latest_weather)

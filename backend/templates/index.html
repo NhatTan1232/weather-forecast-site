@@ -48,6 +48,14 @@
       font-family: Arial, sans-serif;
       position: relative;
     }
+
+    #info-panel {
+      width: 300px;
+      padding: 10px;
+      margin-left: 20px;
+      border-left: 1px solid #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -58,13 +66,21 @@
     <svg id="legend" width="60" height="300"></svg>
   </div>
 
-  <div id="map-container"></div>
+  <div style="display: flex;">
+    <div id="map-container"></div>
+
+    <!-- Info panel -->
+    <div id="info-panel">
+      <h3>Province Info</h3>
+      <div id="province-data">Click on a province to see details.</div>
+    </div>
+  </div>
+
   <div class="tooltip" id="tooltip"></div>
 
   <script>
-    // Color scale from cool to hot
     const colorScale = d3.scaleLinear()
-      .domain([20, 25, 30, 35])  // Customize based on Vietnam temps
+      .domain([20, 25, 30, 35])
       .range(["#1b8a5a", "#fbb021", "#f68838", "#ee3e32"]);
 
     const tooltip = document.getElementById('tooltip');
@@ -76,18 +92,17 @@
       const regionId = weather.location.name;
       const temp = weather.current.temp_c;
 
-      // Load the SVG if it's not already loaded
       if (!document.getElementById("vietnam-map")) {
         const svgData = await d3.xml("/vietnam.svg");
         const svgNode = svgData.documentElement;
 
-        svgNode.id = "vietnam-map";  // Give it an ID for later reference
+        svgNode.id = "vietnam-map";
         document.getElementById("map-container").appendChild(svgNode);
 
-        // Add hover listeners to regions
         svgNode.querySelectorAll('path, g').forEach(region => {
           region.classList.add('region');
 
+          // Tooltip hover
           region.addEventListener('mouseover', e => {
             const name = region.id;
             const temp = region.getAttribute('data-temp') || 'N/A';
@@ -103,10 +118,34 @@
           region.addEventListener('mouseout', () => {
             tooltip.style.display = 'none';
           });
+
+          // Click to show detailed province info
+          region.addEventListener('click', async () => {
+            const provinceId = region.id;
+            const panel = document.getElementById("province-data");
+
+            try {
+              const res = await fetch(`/province/${provinceId}`);
+              const data = await res.json();
+
+              if (res.ok) {
+                panel.innerHTML = `
+                  <strong>Province:</strong> ${data.location_name}<br>
+                  <strong>Predicted Temp:</strong> ${data.temp_c}°C<br>
+                  <strong>Condition:</strong> ${data.condition_text || 'N/A'}<br>
+                  <strong>Time:</strong> ${data.time}
+                `;
+              } else {
+                panel.innerHTML = `<em>${data.error}</em>`;
+              }
+            } catch (err) {
+              panel.innerHTML = `<em>Error fetching data for ${provinceId}</em>`;
+              console.error(err);
+            }
+          });
         });
       }
 
-      // Color the region
       const regionPath = document.getElementById(regionId);
       if (regionPath) {
         regionPath.setAttribute("fill", colorScale(temp));
@@ -123,12 +162,10 @@
     const legendGroup = legendSvg.append("g")
       .attr("transform", `translate(${legendMargin.left},${legendMargin.top})`);
 
-    // Vertical scale: 35°C on top, 20°C on bottom
     const tempScale = d3.scaleLinear()
-      .domain([35, 20])  // Flip scale
+      .domain([35, 20])
       .range([0, legendInnerHeight]);
 
-    // Gradient definition
     const defs = legendSvg.append("defs");
     const linearGradient = defs.append("linearGradient")
       .attr("id", "temperature-gradient")
@@ -138,13 +175,12 @@
       .attr("y2", "100%");
 
     for (let i = 0; i <= 100; i++) {
-      const temp = 35 - (15 * i / 100); // start from 35 down to 20
+      const temp = 35 - (15 * i / 100);
       linearGradient.append("stop")
         .attr("offset", `${i}%`)
         .attr("stop-color", colorScale(temp));
     }
 
-    // Draw gradient bar
     legendGroup.append("rect")
       .attr("x", 10)
       .attr("y", 0)
@@ -152,7 +188,6 @@
       .attr("height", legendInnerHeight)
       .style("fill", "url(#temperature-gradient)");
 
-    // Axis
     const axis = d3.axisRight(tempScale)
       .tickValues([20, 25, 30, 35])
       .tickFormat(d => d + "°C");
@@ -162,7 +197,7 @@
       .call(axis);
 
     fetchWeather();
-    setInterval(fetchWeather, 50);
+    setInterval(fetchWeather, 100);  // Adjust as needed
   </script>
 </body>
 
