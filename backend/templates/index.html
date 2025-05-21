@@ -73,6 +73,7 @@
     <div id="info-panel">
       <h3>Province Info</h3>
       <div id="province-data">Click on a province to see details.</div>
+      <svg id="province-line-chart" width="300" height="200"></svg>
     </div>
   </div>
 
@@ -124,10 +125,16 @@
               if (res.ok) {
                 panel.innerHTML = `
                   <strong>Province:</strong> ${data.location_name}<br>
-                  <strong>Temperature:</strong> ${data.temp_c}°C<br>
                   <strong>Condition:</strong> ${data.condition_text || 'N/A'}<br>
-                  <strong>Time:</strong> ${data.time}
+                  <strong>Time:</strong> ${data.time}<br>
+                  <br><strong>Predicted Temperature (next 24h):</strong>
                 `;
+                if (Array.isArray(data.predicted_temp_next_24h)) {
+                  console.log("Predicted temps:", data.predicted_temp_next_24h);
+                  drawProvinceLineChart(data.predicted_temp_next_24h[0]);
+                } else {
+                  document.getElementById("province-line-chart").innerHTML = "";
+                }
               } else {
                 panel.innerHTML = `<em>${data.error}</em>`;
               }
@@ -190,7 +197,51 @@
       .call(axis);
 
     fetchWeather();
-    setInterval(fetchWeather, 100);  // Adjust as needed
+    setInterval(fetchWeather, 100);
+
+    function drawProvinceLineChart(data) {
+      const svg = d3.select("#province-line-chart");
+      svg.selectAll("*").remove(); // Clear old chart
+
+      const margin = { top: 10, right: 20, bottom: 30, left: 30 },
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([0, 23]).range([0, width]);
+      const y = d3.scaleLinear()
+        .domain([d3.min(data) - 1, d3.max(data) + 1])
+        .range([height, 0]);
+
+      const line = d3.line()
+        .x((d, i) => x(i))
+        .y(d => y(d));
+
+      // Axes
+      g.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).ticks(6).tickFormat(d => `${d}h`));
+
+      g.append("g").call(d3.axisLeft(y).ticks(5));
+
+      // Line
+      g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#ff7f0e")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+      // Dots
+      g.selectAll("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", (d, i) => x(i))
+        .attr("cy", d => y(d))
+        .attr("r", 2)
+        .attr("fill", "#ff7f0e");
+    }
   </script>
 </body>
 
