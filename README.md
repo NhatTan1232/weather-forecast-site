@@ -1,6 +1,14 @@
 # Weather Web Application
-
 A real-time weather forecasting application that combines weather data streaming with machine learning predictions for temperature forecasting in Vietnam.
+
+## Table of Contents
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Running the Application](#running-the-application)
+- [Data Flow](#data-flow)
 
 ## Features
 
@@ -12,7 +20,6 @@ A real-time weather forecasting application that combines weather data streaming
 
 ## Technology Stack
 
-- **Backend**: Python Flask
 - **Data Streaming**: Apache Kafka
 - **Database**: MongoDB
 - **Machine Learning**: TensorFlow (RNN model for temperature prediction)
@@ -22,27 +29,33 @@ A real-time weather forecasting application that combines weather data streaming
 ## Prerequisites
 
 - Python 3.11+
-- Apache Kafka
-- MongoDB
-- Required Python packages (see Installation section)
+- Apache Kafka 3.9.0
+- MongoDB 4.4+
+- Weather API key from [weatherapi.com](https://www.weatherapi.com/)
+- hadoop.dll and winutils.exe (for Windows users)
 
 ## Installation
 
 1. Clone the repository
-2. Install Python dependencies:
+2. Sign up and get a free api key from [weatherapi.com](https://www.weatherapi.com/)
+3. Create an .env file like this:
+```bash
+WEATHER_API_KEY=<YOUR_API_KEY>
+```
+4. Install Python dependencies:
 ```bash
 pip install flask kafka-python pymongo pandas scikit-learn tensorflow joblib
 ```
 
-3. Set up Kafka:
-   - Extract the Kafka archive:
+5. Set up Kafka:
+   - Download Kafka and extract the Kafka archive:
    ```bash
    cd kafka
-   tar -xzf kafka_2.12-3.9.0.tgz
+   tar -xzf kafka_*.tgz
    ```
    - Start Zookeeper and Kafka servers (see Running section)
 
-4. Start MongoDB server on your local machine (default port: 27017)
+6. Start MongoDB server on your local machine (default port: 27017)
 
 ## Project Structure
 
@@ -78,43 +91,17 @@ cd kafka/kafExd/bin/windows
 python kafka/weather_producer.py
 ```
 
-3. Start the Kafka consumer:
-```bash
-python kafka/weather_consumer.py
-```
-
-4. Start the Flask application:
+3. Start the web application (this include Kafka comsumer):
 ```bash
 python backend/app.py
 ```
 
 5. Access the application at `http://localhost:5000`
 
-## Machine Learning Models
-
-The application uses two main machine learning models:
-- RNN (Recurrent Neural Network) for temperature prediction
-- Models are pre-trained and stored in the `model/model_rnn/` directory
-
 ## Data Flow
-
 1. Weather Producer fetches real-time weather data
 2. Data is streamed through Kafka
 3. Consumer processes the data and makes predictions
 4. Results are stored in MongoDB
 5. Flask backend serves the processed data
 6. Frontend visualizes the data on an interactive map
-
-## API Documentation
-
-- GET `/`: Main dashboard
-- GET `/api/weather`: Get latest weather data
-- GET `/api/predictions`: Get temperature predictions
-
-## Contributing
-
-Feel free to submit issues and enhancement requests.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
