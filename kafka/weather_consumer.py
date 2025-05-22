@@ -7,6 +7,9 @@ from datetime import datetime
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import load_model
 import joblib
+from pyspark.ml.feature import StringIndexerModel, VectorAssembler, StandardScalerModel
+from pyspark.ml import PipelineModel
+from pyspark.sql import SparkSession
 
 # Load trained model and scalers
 model_temp = load_model("model/model_rnn/model_temp.h5", compile=False)
@@ -20,6 +23,16 @@ with open("model/model_rnn/condition_index_map.json", "r") as f:
 with open("model/model_rnn/wind_index_map.json", "r") as f:
     wind_dir_mapping = json.load(f)
 
+# Add after other model loading
+weather_model_path = "model/model_rf/random_forest_model"
+weather_model = PipelineModel.load(weather_model_path)
+condition_indexer = StringIndexerModel.load("model/model_rf/condition_indexer")
+vector_assembler = VectorAssembler.load("model/model_rf/vector_assembler")
+feature_scaler = StandardScalerModel.load("model/model_rf/standard_scaler")
+latest_weather = {}
+
+# Initialize SparkSession
+spark = SparkSession.builder.appName("WeatherConsumer").getOrCreate()
 latest_weather = {}
 
 # List of features used for prediction
@@ -28,7 +41,16 @@ temp_features = [
     'cloud', 'vis_km', 'uv', 'gust_mph', 'condition_index', 'wind_dir_index'
 ]
 
-def preprocess_record(data):
+valid_condition = {
+    "Cloudy", "Light rain", "Heavy rain", "Patchy rain possible", 
+    "Torrential rain shower", "Moderate or heavy rain shower", 
+    "Patchy light rain", "Fog", "Clear", "Partly cloudy", "Sunny",
+    "Patchy light drizzle", "Light drizzle", "Heavy rain at times",
+    "Patchy light rain with thunder", "Mist", "Moderate rain at times",
+    "Thundery outbreaks possible", "Overcast", "Moderate rain"
+}
+
+def preprocess_record(data, for_rain=False):
     location = data.get('location', {})
     current = data.get('current', {})
 
@@ -56,6 +78,26 @@ def preprocess_record(data):
 
     df = pd.DataFrame([record])
 
+    if for_rain:
+        raw_condition = data.get('current', {}).get('condition', {}).get('text', '')
+        standardized_condition = raw_condition if raw_condition in valid_condition else "Partly cloudy"
+        
+        record = {
+            'condition_text': standardized_condition,
+            'precip_mm': data.get('current', {}).get('precip_mm', 0),
+            'cloud': data.get('current', {}).get('cloud', 0),
+            'dewpoint_c': data.get('current', {}).get('dewpoint_c', 0)
+        }
+                   
+        # Convert to Spark DataFrame
+        sdf = spark.createDataFrame([record])
+        
+        # Apply saved preprocessing pipeline
+        sdf = condition_indexer.transform(sdf)
+        sdf = vector_assembler.transform(sdf)
+        sdf = feature_scaler.transform(sdf)
+        
+        return sdf
     # Map categorical features
     df['condition_index'] = df['condition_text'].map(condition_mapping).fillna(-1)
     df['wind_dir_index'] = df['wind_dir'].map(wind_dir_mapping).fillna(-1)
@@ -74,6 +116,15 @@ def predict_single_point(data):
     y = scaler_y_temp.inverse_transform(y_scaled)
     return y.tolist()  # Return as list of floats
 
+def predict_rain(data):
+    # Get preprocessed Spark DataFrame
+    spark_df = preprocess_record(data, for_rain=True)
+    
+    # Make prediction
+    prediction_df = weather_model.transform(spark_df)
+    rain_pred = prediction_df.select("prediction").collect()[0][0]
+    return float(rain_pred)
+
 def consume():
     global latest_weather
     consumer = KafkaConsumer(
@@ -91,6 +142,7 @@ def consume():
         try:
             # Predict next 24 hours temperature
             predicted_temps_24h = predict_single_point(latest_weather)  # Shape: (1, 24)
+            will_it_rain = predict_rain(latest_weather)
 
             # Process full weather data into a flat dict
             record_df = preprocess_record(latest_weather)
@@ -98,7 +150,8 @@ def consume():
 
             # Attach prediction
             record['predicted_temp_next_24h'] = predicted_temps_24h  # List of 24 predicted float values
-
+            record['will_it_rain'] = will_it_rain
+            
             # Convert 'time' field to datetime
             if 'time' in record:
                 try:
@@ -110,10 +163,10 @@ def consume():
             # Save to MongoDB
             collection.insert_one(record)
 
-            print(f"✅ Inserted | Location: {record['location_name']} | Time: {record['time']}")
+            print(f"Inserted | Location: {record['location_name']} | Time: {record['time']}")
 
         except Exception as e:
-            print("❌ Error in processing:", e)
+            print("Error in processing:", e)
 
 def get_latest_weather():
     return latest_weather

@@ -130,8 +130,8 @@
               if (res.ok) {
                 panel.innerHTML = `
                   <strong>Province:</strong> ${data.location_name}<br>
-                  <strong>Condition:</strong> ${data.condition_text || 'N/A'}<br>
                   <strong>Time:</strong> ${data.time}<br>
+                  <strong>Will it rain in the next 24h:</strong>${data.will_it_rain >= 0.5 ? '☔ Yes' : '☀️ No'}<br>
                   <br><strong>Predicted Temperature (next 24h):</strong>
                 `;
                 if (Array.isArray(data.predicted_temp_next_24h)) {

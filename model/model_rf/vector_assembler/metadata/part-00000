@@ -1,0 +1,1 @@
+{"class":"org.apache.spark.ml.feature.VectorAssembler","timestamp":1747904816879,"sparkVersion":"3.5.1","uid":"VectorAssembler_af36decae5cb","paramMap":{"outputCol":"features","inputCols":["precip_mm","cloud","dewpoint_c","conditionid"]},"defaultParamMap":{"handleInvalid":"error","outputCol":"VectorAssembler_af36decae5cb__output"}}
