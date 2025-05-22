@@ -45,7 +45,7 @@ WEATHER_API_KEY=<YOUR_API_KEY>
 ```
 4. Install Python dependencies:
 ```bash
-pip install flask kafka-python pymongo pandas scikit-learn tensorflow joblib
+pip install -r requirements.txt
 ```
 
 5. Set up Kafka:
