@@ -42,15 +42,20 @@
     #legend {
       font-size: 12px;
       overflow: visible;
-    }
-
+    }    
+    
     body {
       font-family: Arial, sans-serif;
       position: relative;
     }
 
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
     #info-panel {
-      width: 300px;
+      width: 600px;
       padding: 10px;
       margin-left: 20px;
       border-left: 1px solid #ccc;
@@ -60,7 +65,7 @@
 </head>
 
 <body>
-  <h1>Vietnam Temperature Map</h1>
+  <h1>Vietnam Weather Map</h1>
 
   <div id="legend-container">
     <svg id="legend" width="60" height="300"></svg>
@@ -73,7 +78,7 @@
     <div id="info-panel">
       <h3>Province Info</h3>
       <div id="province-data">Click on a province to see details.</div>
-      <svg id="province-line-chart" width="300" height="200"></svg>
+      <svg id="province-line-chart" width="400" height="300"></svg>
     </div>
   </div>
 
