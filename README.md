@@ -22,15 +22,16 @@ A real-time weather forecasting application that combines weather data streaming
 
 - **Data Streaming**: Apache Kafka
 - **Database**: MongoDB
-- **Machine Learning**: TensorFlow (RNN model for temperature prediction)
+- **Machine Learning**: TensorFlow (RNN model for temperature prediction, Random Forest for raining prediction)
 - **Frontend**: HTML, JavaScript with SVG visualization
-- **Data Processing**: Pandas, Scikit-learn
+- **Data Processing**: Pandas, Scikit-learn, Pyspark
 
 ## Prerequisites
 
 - Python 3.11+
 - Apache Kafka 3.9.0
 - MongoDB 4.4+
+- Java 11
 - Weather API key from [weatherapi.com](https://www.weatherapi.com/)
 - hadoop.dll and winutils.exe (for Windows users)
 
