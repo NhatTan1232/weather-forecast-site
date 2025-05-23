@@ -71,6 +71,7 @@ Weather_Web/
 │   ├── weather_consumer.py # Kafka consumer with ML predictions
 │   └── cities.py          # City data configuration
 └── model/
+    └── model_rf/
     └── model_rnn/         # ML model files and scalers
 ```
 
@@ -106,3 +107,12 @@ python backend/app.py
 4. Results are stored in MongoDB
 5. Flask backend serves the processed data
 6. Frontend visualizes the data on an interactive map
+
+## System Architecture
+
+![System Architecture](./images/SystemArchitecture.png)
+
+## Web Interface
+
+![Web Interface](./images/WebInterface.png)
+![Web Interface details](./images/Webinterfacedetails.png)
