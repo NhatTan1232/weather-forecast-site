@@ -114,5 +114,13 @@ python backend/app.py
 
 ## Web Interface
 
-![Web Interface](./images/WebInterface.png)
-![Web Interface details](./images/Webinterfacedetails.png)
+<p align="center">
+  <img src="./images/WebInterface.png" alt="Web Interface" width="100%"><br>
+  <em>Main interface of the web application</em>
+</p>
+
+<p align="center">
+  <img src="./images/Webinterfacedetails.png" alt="Web Interface details" width="400"><br>
+  <em>Detailed view of the province</em>
+</p>
+
